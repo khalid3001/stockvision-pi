@@ -73,6 +73,64 @@ def device_preview():
     st.caption("Live preview. Press Take photo when the stock is in frame.")
 
 
+def has_device_camera() -> bool:
+    """Is a camera attached to the computer running StockVision?
+
+    The hosted website runs on a server with no camera, so the device camera tab is left out there
+    and the browser camera (the camera of the phone or laptop viewing the page) is offered first.
+    """
+    if camera.pick_backend(cfg) == "picamera":
+        return True
+    if sys.platform.startswith("linux"):
+        return any(Path("/dev").glob("video*"))  # Linux lists every attached camera here
+    return True  # Windows and macOS cannot be checked without switching the camera on: assume a laptop webcam
+
+
+def device_camera_tab(device_label: str):
+    """The tab for the camera attached to this computer: closed -> live preview -> photo taken."""
+    # The camera attached to the computer running StockVision (the Raspberry Pi camera on a Pi,
+    # the webcam on a laptop), not the phone or browser that is showing this page.
+    # Three states: a photo has been taken / the camera is open with a live preview / closed.
+    if st.session_state.get("device_photo"):
+        st.image(st.session_state["device_photo"])
+        d1, d2 = st.columns(2)
+        if d1.button("Retake photo", key="device_retake"):
+            st.session_state["device_photo"] = None
+            st.session_state["device_open"] = True
+            st.rerun()
+        if d2.button("Discard photo", key="device_discard"):
+            st.session_state["device_photo"] = None
+            st.rerun()
+    elif st.session_state.get("device_open"):
+        try:
+            with st.spinner("Opening the camera..."):
+                stream = camera.get_stream(cfg)
+        except camera.CameraError as error:  # back to the closed state, which shows the message
+            st.session_state["device_open"] = False
+            st.session_state["device_error"] = str(error)
+            st.rerun()
+        else:
+            device_preview()
+            d1, d2 = st.columns(2)
+            if d1.button("Take photo", type="primary", key="device_take"):
+                try:
+                    shot = stream.save_photo(Path(cfg["output"]["dir"]) / "captures")
+                    st.session_state["device_photo"] = shot.read_bytes()
+                except camera.CameraError as error:
+                    st.session_state["device_error"] = str(error)
+                close_device_camera()
+            if d2.button("Close camera", key="device_close"):
+                close_device_camera()
+    else:
+        if st.session_state.get("device_error"):
+            st.error(st.session_state.pop("device_error"))
+        st.caption(f"Uses the {device_label.lower()} attached to the computer running StockVision. "
+                   "Open it to see a live preview, then take the photo when the stock is in frame.")
+        if st.button("Open camera", key="device_open_button"):
+            st.session_state["device_open"] = True
+            st.rerun()
+
+
 # ---- sidebar: what the pipeline is configured to do ---------------------------
 with st.sidebar:
     st.subheader("Configuration")
@@ -108,49 +166,13 @@ with tab_verify:
     if st.session_state.get("run") is None:
         st.markdown(style.steps(), unsafe_allow_html=True)
 
-    device_label = camera.BACKEND_LABELS[camera.pick_backend(cfg)]
-    src_device, src_upload, src_camera = st.tabs([device_label, "Upload photo or video", "Phone or browser camera"])
-    with src_device:
-        # The camera attached to the computer running StockVision (the Raspberry Pi camera on a Pi,
-        # the webcam on a laptop), not the phone or browser that is showing this page.
-        # Three states: a photo has been taken / the camera is open with a live preview / closed.
-        if st.session_state.get("device_photo"):
-            st.image(st.session_state["device_photo"])
-            d1, d2 = st.columns(2)
-            if d1.button("Retake photo", key="device_retake"):
-                st.session_state["device_photo"] = None
-                st.session_state["device_open"] = True
-                st.rerun()
-            if d2.button("Discard photo", key="device_discard"):
-                st.session_state["device_photo"] = None
-                st.rerun()
-        elif st.session_state.get("device_open"):
-            try:
-                with st.spinner("Opening the camera..."):
-                    stream = camera.get_stream(cfg)
-            except camera.CameraError as error:
-                st.session_state["device_open"] = False
-                st.error(str(error))
-            else:
-                device_preview()
-                d1, d2 = st.columns(2)
-                if d1.button("Take photo", type="primary", key="device_take"):
-                    try:
-                        shot = stream.save_photo(Path(cfg["output"]["dir"]) / "captures")
-                        st.session_state["device_photo"] = shot.read_bytes()
-                    except camera.CameraError as error:
-                        st.session_state["device_error"] = str(error)
-                    close_device_camera()
-                if d2.button("Close camera", key="device_close"):
-                    close_device_camera()
-        else:
-            if st.session_state.get("device_error"):
-                st.error(st.session_state.pop("device_error"))
-            st.caption(f"Uses the {device_label.lower()} attached to the computer running StockVision. "
-                       "Open it to see a live preview, then take the photo when the stock is in frame.")
-            if st.button("Open camera", key="device_open_button"):
-                st.session_state["device_open"] = True
-                st.rerun()
+    if has_device_camera():
+        device_label = camera.BACKEND_LABELS[camera.pick_backend(cfg)]
+        src_device, src_upload, src_camera = st.tabs([device_label, "Upload photo or video", "Phone or browser camera"])
+        with src_device:
+            device_camera_tab(device_label)
+    else:  # no camera on this computer (the hosted website): the viewer's own camera comes first
+        src_camera, src_upload = st.tabs(["Camera", "Upload photo or video"])
     with src_upload:
         upload = st.file_uploader("Shelf photo or short video", type=UPLOAD_TYPES,
                                   label_visibility="collapsed")
