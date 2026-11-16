@@ -5,13 +5,13 @@ Status: written and tested on a laptop with a webcam standing in for the Pi came
 ## What changed
 
 - `src/camera.py` takes a photo with the camera attached to the computer. `camera.backend` in `config.yaml` chooses the camera: `auto` uses the Raspberry Pi camera on a Pi and the webcam anywhere else.
-- The dashboard has a new first tab that takes the photo with that camera. Upload and the phone/browser camera still work.
+- The dashboard has a new first tab that shows a live preview from that camera and takes the photo when you press the button. Upload and the phone/browser camera still work.
 - `scripts/capture.py` takes a photo and verifies it without the dashboard, once or on a timer.
 - The model, counting, comparison, database and reports are unchanged.
 
 ## Two ways to use it
 
-**Portable.** The Pi runs the dashboard. Someone carries the Pi (on a power bank) to a stack, opens the dashboard on their phone, and presses **Take photo** then **Run verification**. The phone is only the screen; the Pi camera takes the picture.
+**Portable.** The Pi runs the dashboard. Someone carries the Pi (on a power bank) to a stack, opens the dashboard on their phone, presses **Open camera**, aims using the live preview, then presses **Take photo** and **Run verification**. The phone is only the screen; the Pi camera takes the picture.
 
 **Fixed.** The Pi is mounted facing one stack and counts on a timer:
 
@@ -24,7 +24,7 @@ Each count is saved and appears in the dashboard's History tab. A fixed camera s
 ## Try it on the laptop (no Pi needed)
 
 ```
-.\tasks.ps1 dashboard      # first tab is "Webcam": Take photo, then Run verification
+.\tasks.ps1 dashboard      # first tab is "Webcam": Open camera, Take photo, Run verification
 .\tasks.ps1 capture        # the same from the command line
 ```
 
@@ -45,6 +45,7 @@ Suggested hardware: Raspberry Pi 5 (4 GB or 8 GB), Camera Module 3 (it has autof
 
 - **Speed.** `scripts/capture.py` prints how long each count takes. Dense tube stacks are scanned in tiles and will be the slowest case. If it is too slow, lower `camera.width`/`height`, or export the model to NCNN format, which Ultralytics recommends for Raspberry Pi.
 - **numpy.** The system `picamera2` and the pip packages share one numpy. If `import picamera2` fails with a numpy error after setup, run `.venv/bin/pip install "numpy<2"`.
+- **Preview colours.** If the live preview looks blue where it should be red, the pixel order in `src/camera.py` (`"format": "RGB888"`) is wrong for that Pi and needs swapping.
 - **Orientation.** If photos come out upside down or sideways, set `camera.rotate`.
 - **Retraining.** The current model was trained on phone photos. Collect photos with the Pi camera from its real position (`scripts/capture.py --photo-only`), label them and retrain before judging accuracy.
 - **Access.** `make pi-dashboard` opens the dashboard to every device on the same network, with no password.

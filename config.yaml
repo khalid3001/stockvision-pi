@@ -58,8 +58,9 @@ camera:
                         # picamera = always the Pi camera;  webcam = always a built-in or USB camera
   width: 2304           # photo size in pixels. 2304 x 1296 is half the Camera Module 3 sensor:
   height: 1296          #   enough detail for tube stacks without making the Pi scan too many tiles
-  warmup_seconds: 2     # time for brightness and colour to settle before the photo is taken
-  autofocus: true       # focus before each photo (Camera Module 3; ignored by fixed-focus cameras)
+  warmup_seconds: 2     # photos taken without a preview (scripts/capture.py): time for brightness and colour to settle
+  idle_seconds: 60      # the live preview switches the camera off when nobody has watched it for this long
+  autofocus: true       # keep the picture in focus (Camera Module 3; ignored by fixed-focus cameras)
   rotate: 0             # 0, 90, 180 or 270: turn the photo if the camera is mounted sideways or upside down
   webcam_index: 0       # which webcam to use when there is more than one (0 = the first)
 

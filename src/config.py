@@ -11,7 +11,7 @@ VIDEO_MODES = ("track", "peak")
 CAMERA_BACKENDS = ("auto", "picamera", "webcam")
 # The camera section is optional, so a config.yaml written before the Raspberry Pi work still loads.
 CAMERA_DEFAULTS = {"backend": "auto", "width": 2304, "height": 1296, "warmup_seconds": 2,
-                   "autofocus": True, "rotate": 0, "webcam_index": 0}
+                   "idle_seconds": 60, "autofocus": True, "rotate": 0, "webcam_index": 0}
 
 
 class ConfigError(ValueError):

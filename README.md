@@ -42,7 +42,7 @@ If PowerShell refuses to run the script: `Set-ExecutionPolicy -Scope CurrentUser
 
 ## Raspberry Pi
 
-This version also runs on a Raspberry Pi with a Raspberry Pi camera. The dashboard's first tab takes the photo with the camera attached to the computer running StockVision, and `scripts/capture.py --every 30` counts on a timer for a fixed camera. On a laptop the webcam stands in for the Pi camera, so everything can be developed without the hardware. Setup and status: [docs/raspberry_pi.md](docs/raspberry_pi.md).
+This version also runs on a Raspberry Pi with a Raspberry Pi camera. The dashboard's first tab shows a live preview from the camera attached to the computer running StockVision and takes the photo on a button press, and `scripts/capture.py --every 30` counts on a timer for a fixed camera. On a laptop the webcam stands in for the Pi camera, so everything can be developed without the hardware. Setup and status: [docs/raspberry_pi.md](docs/raspberry_pi.md).
 
 
 Everything the pipeline writes goes to `outputs/`: one `run-<timestamp>/` folder per verification (evidence image, `results.csv`, `run.json`) and `reports/` for the Markdown and PDF reports.
