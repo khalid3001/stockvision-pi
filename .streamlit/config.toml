@@ -1,0 +1,20 @@
+# Both themes are defined, so the app follows the viewer's light/dark system setting.
+[theme]
+primaryColor = "#4f46e5"
+font = "sans serif"
+
+[theme.light]
+backgroundColor = "#f7f8fc"
+secondaryBackgroundColor = "#eceefa"
+textColor = "#16192c"
+
+[theme.dark]
+backgroundColor = "#0e1120"
+secondaryBackgroundColor = "#1a1e33"
+textColor = "#e8eaf6"
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

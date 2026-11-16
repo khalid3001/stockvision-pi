@@ -1,0 +1,72 @@
+# StockVision configuration. Everything that changes on Tuesday lives in this file.
+# Paths are relative to this file.
+
+project:
+  name: "Stock verification pilot"
+  client: "Hardware supplier (pilot)"
+  location: "Main warehouse"          # printed on reports
+
+model:
+  weights: "weights/best.pt"          # the file the Colab notebook downloads
+  confidence: 0.6                     # detections below this are ignored (0.6 removes most ghost detections on the 15-image model)
+  iou: 0.3                            # overlap allowed between two boxes; lower removes duplicate boxes on one item
+  max_detections: 1000                # upper limit of items per photo (the library default of 300 is too low for tube stacks)
+  image_size: 640
+  device: "cpu"
+  # Large photos are scanned in overlapping tiles so small items are not shrunk away.
+  tiling: "auto"                      # auto = tile only when the items are small (tube stacks); true = always; false = never
+  small_item_px: 40                   # auto mode: items smaller than this (after shrinking the photo to image_size) get tiles
+  tile_size: 640                      # pixels; make it bigger if single items are larger than a tile
+  tile_overlap: 0.2                   # neighbouring tiles share 20% so items on an edge are not cut
+
+# Model class name -> inventory record.
+# The keys must match the class names the model was trained with (Roboflow class names).
+# Stand-in classes below come from the Roboflow Universe "fastener-object-detection" dataset.
+# Tuesday: replace this block with the 2-3 pilot products.
+classes:
+  cement-bag:
+    sku: "HW-005"
+    display_name: "Cement 50kg bag"
+  square-tube:
+    sku: "ST-001"
+    display_name: "Square steel tube"
+  round-pipe:
+    sku: "RP-001"
+    display_name: "Round steel pipe"
+
+inventory:
+  # CSV columns: sku, item_name, location, recorded_qty, unit, last_counted
+  source_csv: "data/inventory_seed.csv"
+  database: "data/inventory.db"
+
+variance:
+  # variance = detected - recorded;  variance % = variance / recorded * 100
+  match_pct: 2        # |variance %| <= 2            -> match
+  minor_pct: 10       # short by up to 10 %          -> minor, more than that -> major
+  # stockout  = recorded > 0 but nothing detected
+  # overcount = detected exceeds recorded by more than match_pct
+
+video:
+  mode: "track"         # "track" = count each physical item once as the camera pans
+                        # "peak"  = use the single frame with the most detections (fixed camera)
+  frame_stride: 3       # process every 3rd frame (CPU speed)
+  min_track_frames: 3   # a tracked item must be seen in this many processed frames to count
+
+camera:
+  # The camera attached to the computer that runs StockVision (Raspberry Pi or laptop).
+  backend: "auto"       # auto = Raspberry Pi camera when on a Pi, otherwise the webcam
+                        # picamera = always the Pi camera;  webcam = always a built-in or USB camera
+  width: 2304           # photo size in pixels. 2304 x 1296 is half the Camera Module 3 sensor:
+  height: 1296          #   enough detail for tube stacks without making the Pi scan too many tiles
+  warmup_seconds: 2     # time for brightness and colour to settle before the photo is taken
+  autofocus: true       # focus before each photo (Camera Module 3; ignored by fixed-focus cameras)
+  rotate: 0             # 0, 90, 180 or 270: turn the photo if the camera is mounted sideways or upside down
+  webcam_index: 0       # which webcam to use when there is more than one (0 = the first)
+
+training:
+  # Opened by `make train`. Once the repo is on GitHub, use:
+  # https://colab.research.google.com/github/<user>/<repo>/blob/main/notebooks/train_colab.ipynb
+  colab_url: "https://colab.research.google.com/"
+
+output:
+  dir: "outputs"

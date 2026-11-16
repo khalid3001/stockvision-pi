@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+weights/*.pt
+!weights/best.pt
+outputs/
+data/inventory.db
+runs/
+.idea/
+.vscode/
+data/raw/
+data/roboflow_upload/
+data/roboflow_upload_tubes/
